@@ -1,10 +1,34 @@
+# Variables d'environnement partagées
 hugo_env: &hugo_env
-  BASE_URL: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
 
+---
 # Pipeline pour build et création de release
 kind: pipeline
 type: docker
-name: build-and-release
+name: build-check
+
+trigger:
+  event:
+    - push
+  branch:
+    exclude:
+      - master
+
+steps:
+  - name: hugo-build
+    image: peaceiris/hugo:v0.65.3-mod
+    environment:
+      <<: *hugo_env
+    commands:
+      - hugo
+
+---
+# Pipeline pour build et création de release STAGGING
+kind: pipeline
+type: docker
+name: build-and-release-stagging
 
 trigger:
   event:
@@ -18,14 +42,15 @@ steps:
     environment:
       <<: *hugo_env
     commands:
-      - hugo --baseURL $BASE_URL
+      - hugo --baseURL $BASE_URL_PREPROD
 
   - name: create-release-archive
     image: alpine:latest
     commands:
       - apk add --no-cache tar gzip
-      - tar -czf restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz -C public .
-      - echo "Created archive restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz"
+      - SHORT_SHA=$(echo ${DRONE_COMMIT_SHA} | cut -c1-8)
+      - tar -czf restaurant-website-release-${SHORT_SHA}.tar.gz -C public .
+      - echo "Created archive restaurant-website-release-${SHORT_SHA}.tar.gz"
 
   - name: upload-release-to-s3
     image: amazon/aws-cli:2.13.7
@@ -38,8 +63,105 @@ steps:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
     commands:
-      - aws s3 cp restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz
+      - SHORT_SHA=$(echo ${DRONE_COMMIT_SHA} | cut -c1-8)
+      - aws s3 cp restaurant-website-release-${SHORT_SHA}.tar.gz s3://drone-bucket-s3-restaurant-realease/stagging/restaurant-website-release-${SHORT_SHA}.tar.gz
       - echo "Uploaded release archive to S3"
+
+---
+# Pipeline pour build et création de release PRODUCTION
+kind: pipeline
+type: docker
+name: build-and-release-prod
+
+trigger:
+  event:
+    - tag
+  branch:
+    - master
+
+steps:
+  - name: hugo-build
+    image: peaceiris/hugo:v0.65.3-mod
+    environment:
+      <<: *hugo_env
+    commands:
+      - hugo --baseURL $BASE_URL_PROD
+
+  - name: create-release-archive
+    image: alpine:latest
+    commands:
+      - apk add --no-cache tar gzip
+      - TAG_NAME=${DRONE_TAG}
+      - tar -czf restaurant-website-release-${TAG_NAME}.tar.gz -C public .
+      - echo "Created archive restaurant-website-release-${TAG_NAME}.tar.gz"
+
+  - name: upload-release-to-s3
+    image: amazon/aws-cli:2.13.7
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_SESSION_TOKEN:
+        from_secret: aws_session_token
+      AWS_DEFAULT_REGION: us-east-1
+    commands:
+      - TAG_NAME=${DRONE_TAG}
+      - aws s3 cp restaurant-website-release-${TAG_NAME}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-${TAG_NAME}.tar.gz
+      - echo "Uploaded release archive to S3 with tag ${TAG_NAME}"
+    when:
+      event:
+        - tag
+      ref:
+        - refs/tags/**
+
+---
+# Pipeline pour promote (déploiement)
+kind: pipeline
+type: docker
+name: promote-to-stagging
+
+trigger:
+  event:
+    - promote
+  target:
+    - stagging
+
+steps:
+  - name: deploy-release-to-stagging
+    image: alpine:latest
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_SESSION_TOKEN:
+        from_secret: aws_session_token
+      AWS_DEFAULT_REGION: us-east-1
+    commands:
+      - |
+        # Installer les outils nécessaires
+        apk add --no-cache aws-cli tar gzip
+
+        # Récupérer le paramètre version (passé via --param version=XX)
+        VERSION=$${PLUGIN_VERSION:-${DRONE_BUILD_PARENT}}
+        echo "Deploying release version: $${VERSION}"
+
+        # Télécharger l'archive depuis le bucket releases
+        echo "Downloading release archive..."
+        aws s3 cp s3://drone-bucket-s3-restaurant-realease/stagging/restaurant-website-release-$${VERSION}.tar.gz .
+        echo "Downloaded restaurant-website-release-$${VERSION}.tar.gz"
+
+        # Extraire l'archive
+        echo "Extracting release..."
+        mkdir -p public
+        tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
+        echo "Extracted release $${VERSION}"
+
+        # Déployer sur le bucket stagging
+        echo "Deploying to stagging bucket..."
+        aws s3 sync public/ s3://drone-bucket-s3-restaurant-stagging --delete
+        echo "Successfully deployed release $${VERSION} to stagging!"
 
 ---
 # Pipeline pour promote (déploiement)
@@ -75,16 +197,16 @@ steps:
 
         # Télécharger l'archive depuis le bucket releases
         echo "Downloading release archive..."
-        aws s3 cp s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-$${VERSION}.tar.gz .
+        aws s3 cp s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-$${VERSION}.tar.gz .
         echo "Downloaded restaurant-website-release-$${VERSION}.tar.gz"
 
         # Extraire l'archive
-        echo "📦 Extracting release..."
+        echo "Extracting release..."
         mkdir -p public
         tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
         echo "Extracted release $${VERSION}"
 
         # Déployer sur le bucket production
-        echo "🚢 Deploying to production bucket..."
+        echo "Deploying to production bucket..."
         aws s3 sync public/ s3://drone-bucket-s3-restaurant --delete
         echo "Successfully deployed release $${VERSION} to production!"
