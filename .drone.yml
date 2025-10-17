@@ -97,7 +97,7 @@ steps:
       AWS_DEFAULT_REGION: us-east-1
     commands:
       - export TAG_NAME=${DRONE_TAG}
-      - aws s3 cp restaurant-website-release-${DRONE_TAG}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-${TAG_NAME}.tar.gz
+      - aws s3 cp restaurant-website-release-${DRONE_TAG}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-${DRONE_TAG}.tar.gz
       - echo "Uploaded release archive to S3 with tag ${DRONE_TAG}"
     when:
       event:
