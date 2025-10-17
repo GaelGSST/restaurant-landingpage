@@ -54,25 +54,7 @@ trigger:
     - production
 
 steps:
-  - name: download-release
-    image: amazon/aws-cli:2.13.7
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-      AWS_SESSION_TOKEN:
-        from_secret: aws_session_token
-      AWS_DEFAULT_REGION: us-east-1
-    commands:
-      - |
-        # Utiliser le paramètre version si fourni, sinon utiliser DRONE_BUILD_PARENT
-        VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
-        echo "Downloading release version: $${VERSION}"
-        aws s3 cp s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-$${VERSION}.tar.gz .
-        echo "Downloaded release $${VERSION}"
-
-  - name: extract-and-deploy
+  - name: deploy-release-to-production
     image: alpine:latest
     environment:
       AWS_ACCESS_KEY_ID:
@@ -84,17 +66,25 @@ steps:
       AWS_DEFAULT_REGION: us-east-1
     commands:
       - |
-        # Installer AWS CLI et tar
+        # Installer les outils nécessaires
         apk add --no-cache aws-cli tar gzip
 
+        # Récupérer le paramètre version (passé via --param version=XX)
+        VERSION=$${PLUGIN_VERSION:-${DRONE_BUILD_PARENT}}
+        echo "Deploying release version: $${VERSION}"
+
+        # Télécharger l'archive depuis le bucket releases
+        echo "Downloading release archive..."
+        aws s3 cp s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-$${VERSION}.tar.gz .
+        echo "Downloaded restaurant-website-release-$${VERSION}.tar.gz"
+
         # Extraire l'archive
-        VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
-        echo "Extracting release $${VERSION}"
+        echo "📦 Extracting release..."
         mkdir -p public
         tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
         echo "Extracted release $${VERSION}"
 
-        # Déployer sur S3
-        echo "Deploying to production..."
+        # Déployer sur le bucket production
+        echo "🚢 Deploying to production bucket..."
         aws s3 sync public/ s3://drone-bucket-s3-restaurant --delete
-        echo "✅ Deployed release $${VERSION} to production"
+        echo "Successfully deployed release $${VERSION} to production!"
