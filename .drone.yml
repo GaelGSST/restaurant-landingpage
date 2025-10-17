@@ -134,7 +134,7 @@ steps:
         apk add --no-cache aws-cli tar gzip
 
         # Récupérer le paramètre version (passé via --param version=XX)
-        VERSION=$${PLUGIN_VERSION:-${DRONE_BUILD_PARENT}}
+        VERSION=${VERSION}
         echo "Deploying release version: $${VERSION}"
 
         # Télécharger l'archive depuis le bucket releases
@@ -182,7 +182,7 @@ steps:
         apk add --no-cache aws-cli tar gzip
 
         # Récupérer le paramètre version (passé via --param version=XX)
-        VERSION=$${PLUGIN_VERSION:-${DRONE_BUILD_PARENT}}
+        VERSION=${VERSION}
         echo "Deploying release version: $${VERSION}"
 
         # Télécharger l'archive depuis le bucket releases
