@@ -29,5 +29,3 @@ steps:
       AWS_SESSION_TOKEN:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
-    commands:
-      - aws s3 sync ./public s3://drone-bucket-s3-restaurant --acl public-read --delete
