@@ -23,7 +23,7 @@ steps:
     image: plugins/s3
     settings:
       bucket: drone-bucket-s3-restaurant
-      region: eu-east-1
+      region: us-east-1
       access_key:
         from_secret: aws_access_key_id
       secret_key:
