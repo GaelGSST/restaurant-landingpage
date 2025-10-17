@@ -1,9 +1,3 @@
-# Variables d'environnement partagées
-hugo_env: &hugo_env
-  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
-  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
-
----
 # Pipeline pour build et création de release
 kind: pipeline
 type: docker
@@ -19,8 +13,6 @@ trigger:
 steps:
   - name: hugo-build
     image: peaceiris/hugo:v0.65.3-mod
-    environment:
-      <<: *hugo_env
     commands:
       - hugo
 
@@ -29,6 +21,11 @@ steps:
 kind: pipeline
 type: docker
 name: build-and-release-stagging
+
+# Variables d'environnement partagées
+hugo_env: &hugo_env
+  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
 
 trigger:
   event:
