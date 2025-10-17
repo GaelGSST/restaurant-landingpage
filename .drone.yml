@@ -19,6 +19,8 @@ steps:
     commands:
       - hugo --baseURL $BASE_URL
 
+  # ...existing code...
+
   - name: upload-to-s3
     image: amazon/aws-cli:2.13.7
     environment:
@@ -29,3 +31,6 @@ steps:
       AWS_SESSION_TOKEN:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
+    commands:
+      - aws s3 sync public/ s3://drone-bucket-s3-restaurant  --delete
+      - aws s3 website s3://drone-bucket-s3-restaurant  --index-document index.html --error-document 404.html
