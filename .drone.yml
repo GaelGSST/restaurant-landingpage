@@ -30,11 +30,9 @@ steps:
         from_secret: aws_session_token
     commands:
       - echo "=== Debug Variables ==="
-      - echo AWS_ACCESS_KEY_ID
-      - echo AWS_SECRET_ACCESS_KEY
-      - echo AWS_SESSION_TOKEN
-      - echo "Files to upload:"
-      - ls -la public/ || echo "public/ directory not found"
+      - echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+      - echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+      - echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN"
 
   - name: upload-to-s3
     image: plugins/s3
@@ -51,10 +49,3 @@ steps:
       target: /
       acl: public-read
       strip_prefix: public
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-      AWS_SESSION_TOKEN:
-        from_secret: aws_session_token
