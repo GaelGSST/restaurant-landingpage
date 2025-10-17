@@ -78,22 +78,22 @@ trigger:
     - tag
 
 steps:
-  - name: hugo-build
+  - name: hugo-build-tag
     image: peaceiris/hugo:v0.65.3-mod
     environment:
       <<: *hugo_env
     commands:
       - hugo --baseURL $BASE_URL_PROD
 
-  - name: create-release-archive
+  - name: create-release-archive-tag
     image: alpine:latest
     commands:
       - apk add --no-cache tar gzip
-      - TAG_NAME=${DRONE_TAG}
+      - export TAG_NAME=${DRONE_TAG}
       - tar -czf restaurant-website-release-${TAG_NAME}.tar.gz -C public .
       - echo "Created archive restaurant-website-release-${TAG_NAME}.tar.gz"
 
-  - name: upload-release-to-s3
+  - name: upload-release-to-s3-tag
     image: amazon/aws-cli:2.13.7
     environment:
       AWS_ACCESS_KEY_ID:
@@ -104,7 +104,8 @@ steps:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
     commands:
-      - TAG_NAME=${DRONE_TAG}
+      - export TAG_NAME=${DRONE_TAG}
+      - echo "Tag name: $TAG_NAME"
       - aws s3 cp restaurant-website-release-${TAG_NAME}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-${TAG_NAME}.tar.gz
       - echo "Uploaded release archive to S3 with tag ${TAG_NAME}"
     when:
