@@ -14,6 +14,8 @@ trigger:
 steps:
   - name: hugo-build
     image: peaceiris/hugo:v0.65.3-mod
+    environment:
+      <<: *hugo_env
     commands:
       - hugo --baseURL $BASE_URL
 
