@@ -24,6 +24,7 @@ body {
   font-family: myfont;
   font-size: 14px;
   font-weight: 400;
+  background-color: #b230e2 !important;
 }
 
 a:focus {
