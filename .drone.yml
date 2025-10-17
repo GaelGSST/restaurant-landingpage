@@ -44,9 +44,9 @@ steps:
     image: alpine:latest
     commands:
       - apk add --no-cache tar gzip
-      - SHORT_SHA=$(echo ${DRONE_COMMIT_SHA} | cut -c1-8)
-      - tar -czf restaurant-website-release-${SHORT_SHA}.tar.gz -C public .
-      - echo "Created archive restaurant-website-release-${SHORT_SHA}.tar.gz"
+      - export SHORT_SHA=$(echo $DRONE_COMMIT_SHA | cut -c1-8)
+      - tar -czf restaurant-website-release-$SHORT_SHA.tar.gz -C public .
+      - echo "Created archive restaurant-website-release-$SHORT_SHA.tar.gz"
 
   - name: upload-release-to-s3
     image: amazon/aws-cli:2.13.7
@@ -59,8 +59,8 @@ steps:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
     commands:
-      - SHORT_SHA=$(echo ${DRONE_COMMIT_SHA} | cut -c1-8)
-      - aws s3 cp restaurant-website-release-${SHORT_SHA}.tar.gz s3://drone-bucket-s3-restaurant-realease/stagging/restaurant-website-release-${SHORT_SHA}.tar.gz
+      - export SHORT_SHA=$(echo $DRONE_COMMIT_SHA | cut -c1-8)
+      - aws s3 cp restaurant-website-release-$SHORT_SHA.tar.gz s3://drone-bucket-s3-restaurant-realease/stagging/restaurant-website-release-$SHORT_SHA.tar.gz
       - echo "Uploaded release archive to S3"
 
 ---
