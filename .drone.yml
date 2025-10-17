@@ -30,9 +30,9 @@ steps:
         from_secret: aws_session_token
     commands:
       - echo "=== Debug Variables ==="
-      - echo "AWS_ACCESS_KEY_ID is set: $${AWS_ACCESS_KEY_ID:+YES}"
-      - echo "AWS_SECRET_ACCESS_KEY is set: $${AWS_SECRET_ACCESS_KEY:+YES}"
-      - echo "AWS_SESSION_TOKEN is set: $${AWS_SESSION_TOKEN:+YES}"
+      - echo AWS_ACCESS_KEY_ID
+      - echo AWS_SECRET_ACCESS_KEY
+      - echo AWS_SESSION_TOKEN
       - echo "Files to upload:"
       - ls -la public/ || echo "public/ directory not found"
 
