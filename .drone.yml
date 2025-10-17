@@ -33,4 +33,3 @@ steps:
       AWS_DEFAULT_REGION: us-east-1
     commands:
       - aws s3 sync public/ s3://drone-bucket-s3-restaurant  --delete
-      - aws s3 website s3://drone-bucket-s3-restaurant  --index-document index.html --error-document 404.html
