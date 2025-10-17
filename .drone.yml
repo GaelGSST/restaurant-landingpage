@@ -70,12 +70,10 @@ steps:
         VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
         echo "Downloading release version: $${VERSION}"
         aws s3 cp s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-$${VERSION}.tar.gz .
-        mkdir -p public
-        tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
-        echo "Extracted release $${VERSION}"
+        echo "Downloaded release $${VERSION}"
 
-  - name: deploy-to-production
-    image: amazon/aws-cli:2.13.7
+  - name: extract-and-deploy
+    image: alpine:latest
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -86,5 +84,17 @@ steps:
       AWS_DEFAULT_REGION: us-east-1
     commands:
       - |
+        # Installer AWS CLI et tar
+        apk add --no-cache aws-cli tar gzip
+
+        # Extraire l'archive
         VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
+        echo "Extracting release $${VERSION}"
+        mkdir -p public
+        tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
+        echo "Extracted release $${VERSION}"
+
+        # Déployer sur S3
+        echo "Deploying to production..."
         aws s3 sync public/ s3://drone-bucket-s3-restaurant --delete
+        echo "✅ Deployed release $${VERSION} to production"
