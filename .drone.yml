@@ -1,3 +1,4 @@
+---
 # Pipeline pour build et création de release
 kind: pipeline
 type: docker
@@ -17,6 +18,10 @@ steps:
       - hugo
 
 ---
+hugo_env: &hugo_env
+  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
+
 # Pipeline pour build et création de release STAGGING
 kind: pipeline
 type: docker
@@ -32,7 +37,7 @@ steps:
   - name: hugo-build
     image: peaceiris/hugo:v0.65.3-mod
     environment:
-      BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
+      <<: *hugo_env
     commands:
       - hugo --baseURL $BASE_URL_PREPROD
 
@@ -60,6 +65,10 @@ steps:
       - echo "Uploaded release archive to S3"
 
 ---
+hugo_env: &hugo_env
+  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
+
 # Pipeline pour build et création de release PRODUCTION
 kind: pipeline
 type: docker
@@ -73,7 +82,7 @@ steps:
   - name: hugo-build-tag
     image: peaceiris/hugo:v0.65.3-mod
     environment:
-      BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
+      <<: *hugo_env
     commands:
       - hugo --baseURL $BASE_URL_PROD
 
@@ -201,3 +210,5 @@ steps:
         echo "Deploying to production bucket..."
         aws s3 sync public/ s3://drone-bucket-s3-restaurant --delete
         echo "Successfully deployed release $${VERSION} to production!"
+---
+
