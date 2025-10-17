@@ -1,9 +1,10 @@
 hugo_env: &hugo_env
   BASE_URL: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
 
+# Pipeline pour build et création de release
 kind: pipeline
 type: docker
-name: hugo-website
+name: build-and-release
 
 trigger:
   event:
@@ -39,3 +40,51 @@ steps:
     commands:
       - aws s3 cp restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz
       - echo "Uploaded release archive to S3"
+
+---
+# Pipeline pour promote (déploiement)
+kind: pipeline
+type: docker
+name: promote-to-production
+
+trigger:
+  event:
+    - promote
+  target:
+    - production
+
+steps:
+  - name: download-release
+    image: amazon/aws-cli:2.13.7
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_SESSION_TOKEN:
+        from_secret: aws_session_token
+      AWS_DEFAULT_REGION: us-east-1
+    commands:
+      - |
+        # Utiliser le paramètre version si fourni, sinon utiliser DRONE_BUILD_PARENT
+        VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
+        echo "Downloading release version: $${VERSION}"
+        aws s3 cp s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-$${VERSION}.tar.gz .
+        mkdir -p public
+        tar -xzf restaurant-website-release-$${VERSION}.tar.gz -C public
+        echo "Extracted release $${VERSION}"
+
+  - name: deploy-to-production
+    image: amazon/aws-cli:2.13.7
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_SESSION_TOKEN:
+        from_secret: aws_session_token
+      AWS_DEFAULT_REGION: us-east-1
+    commands:
+      - |
+        VERSION=$${DRONE_DEPLOY_TO_VERSION:-${DRONE_BUILD_PARENT}}
+        aws s3 sync public/ s3://drone-bucket-s3-restaurant --delete
