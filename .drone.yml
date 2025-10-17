@@ -24,13 +24,14 @@ steps:
     settings:
       bucket: drone-bucket-s3-restaurant
       region: us-east-1
-      access_key:
-        from_secret: aws_access_key_id
-      secret_key:
-        from_secret: aws_secret_access_key
-      session_token:
-        from_secret: aws_session_token
       source: public/**
       target: /
       acl: public-read
       strip_prefix: public
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_SESSION_TOKEN:
+        from_secret: aws_session_token
