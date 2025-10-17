@@ -115,7 +115,6 @@ steps:
       ref:
         - refs/tags/**
 
-
 ---
 # Pipeline pour promote (déploiement)
 kind: pipeline
