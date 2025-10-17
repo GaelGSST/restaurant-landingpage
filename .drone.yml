@@ -76,8 +76,6 @@ hugo_env: &hugo_env
 trigger:
   event:
     - tag
-  branch:
-    - master
 
 steps:
   - name: hugo-build
