@@ -78,13 +78,13 @@ steps:
     commands:
       - hugo --baseURL $BASE_URL_PROD
 
-  - name: create-release-archive-tag
+    - name: create-release-archive-tag
     image: alpine:latest
     commands:
       - apk add --no-cache tar gzip
-      - export TAG_NAME=${DRONE_TAG}
-      - tar -czf restaurant-website-release-${TAG_NAME}.tar.gz -C public .
-      - echo "Created archive restaurant-website-release-${TAG_NAME}.tar.gz"
+      - export TAG_NAME=$${DRONE_TAG}
+      - tar -czf restaurant-website-release-$${TAG_NAME}.tar.gz -C public .
+      - echo "Created archive restaurant-website-release-$${TAG_NAME}.tar.gz"
 
   - name: upload-release-to-s3-tag
     image: amazon/aws-cli:2.13.7
@@ -97,9 +97,9 @@ steps:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
     commands:
-      - export TAG_NAME=${DRONE_TAG}
-      - aws s3 cp restaurant-website-release-${TAG_NAME}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-${TAG_NAME}.tar.gz
-      - echo "Uploaded release archive to S3 with tag ${TAG_NAME}"
+      - export TAG_NAME=$${DRONE_TAG}
+      - aws s3 cp restaurant-website-release-$${TAG_NAME}.tar.gz s3://drone-bucket-s3-restaurant-realease/prod/restaurant-website-release-$${TAG_NAME}.tar.gz
+      - echo "Uploaded release archive to S3 with tag $${TAG_NAME}"
     when:
       event:
         - tag
