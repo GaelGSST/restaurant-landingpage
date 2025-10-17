@@ -1,5 +1,5 @@
 hugo_env: &hugo_env
-  BASE_URL: https://github.com/GaelGSST/restaurant-landingpage
+  BASE_URL: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
 
 kind: pipeline
 type: docker
