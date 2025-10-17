@@ -23,10 +23,8 @@ steps:
     image: alpine:latest
     commands:
       - apk add --no-cache tar gzip
-      - export RELEASE_VERSION=${DRONE_BUILD_NUMBER:-$(date +%Y%m%d-%H%M%S)}
-      - export ARCHIVE_NAME="restaurant-website-release-$RELEASE_VERSION.tar.gz"
-      - tar -czf $ARCHIVE_NAME -C public .
-      - echo "Created archive: $ARCHIVE_NAME"
+      - tar -czf restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz -C public .
+      - echo "Created archive restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz"
 
   - name: upload-release-to-s3
     image: amazon/aws-cli:2.13.7
@@ -39,7 +37,5 @@ steps:
         from_secret: aws_session_token
       AWS_DEFAULT_REGION: us-east-1
     commands:
-      - export RELEASE_VERSION=${DRONE_BUILD_NUMBER:-$(date +%Y%m%d-%H%M%S)}
-      - export ARCHIVE_NAME="restaurant-website-release-$RELEASE_VERSION.tar.gz"
-      - aws s3 cp $ARCHIVE_NAME drone-bucket-s3-restaurant-realease/$ARCHIVE_NAME
-      - echo "Uploaded release archive to S3: $ARCHIVE_NAME"
+      - aws s3 cp restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz s3://drone-bucket-s3-restaurant-realease/restaurant-website-release-${DRONE_BUILD_NUMBER}.tar.gz
+      - echo "Uploaded release archive to S3"
