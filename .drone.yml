@@ -19,8 +19,8 @@ steps:
     commands:
       - hugo --baseURL $BASE_URL
 
-  - name: debug-variables
-    image: alpine:latest
+  - name: upload-to-s3
+    image: amazon/aws-cli:2.13.7
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -28,24 +28,6 @@ steps:
         from_secret: aws_secret_access_key
       AWS_SESSION_TOKEN:
         from_secret: aws_session_token
+      AWS_DEFAULT_REGION: us-east-1
     commands:
-      - echo "=== Debug Variables ==="
-      - echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
-      - echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
-      - echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN"
-
-  - name: upload-to-s3
-    image: plugins/s3
-    settings:
-      bucket: drone-bucket-s3-restaurant
-      region: us-east-1
-      access_key:
-        from_secret: aws_access_key_id
-      secret_key:
-        from_secret: aws_secret_access_key
-      session_token:
-        from_secret: aws_session_token
-      source: public/**
-      target: /
-      acl: public-read
-      strip_prefix: public
+      - aws s3 sync ./public s3://drone-bucket-s3-restaurant --acl public-read --delete
