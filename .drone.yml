@@ -19,7 +19,6 @@ steps:
 
 ---
 hugo_env: &hugo_env
-  BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
   BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
 
 # Pipeline pour build et création de release STAGGING
@@ -67,7 +66,6 @@ steps:
 ---
 hugo_env: &hugo_env
   BASE_URL_PROD: http://drone-bucket-s3-restaurant.s3-website-us-east-1.amazonaws.com
-  BASE_URL_PREPROD: http://drone-bucket-s3-restaurant-stagging.s3-website-us-east-1.amazonaws.com
 
 # Pipeline pour build et création de release PRODUCTION
 kind: pipeline
