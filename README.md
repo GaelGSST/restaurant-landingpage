@@ -11,30 +11,30 @@
 | Release         | 24.04              |
 | Codename        | noble              |
 
----
+--
 
-* Install [Nginx webserver](https://www.nginx.com/)
+- Install [Nginx webserver](https://www.nginx.com/)
 
 ```bash
 apt-get update
 apt-get install nginx
 ```
 
-* Configure your webserver to run on port `8080`
+- Configure your webserver to run on port `8080`
 
 ```
 # Edit the following file and set server port to 8080
 nano /etc/nginx/sites-enabled/default
 ```
 
-* Restart the `nginx` webserver 
+- Restart the `nginx` webserver
 
 ```
 systemctl status nginx
 systemctl restart nginx
 ```
 
-* Download the Website release from Github / Extract the archive and place it under Nginx `/var/www/html`
+- Download the Website release from Github / Extract the archive and place it under Nginx `/var/www/html`
 
 ```bash
 # Devenir root
